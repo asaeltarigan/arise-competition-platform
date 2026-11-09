@@ -6,6 +6,16 @@ Participants register, download a private train/test split, submit a CSV of pred
 
 This repository is a **sanitized archival snapshot** of the platform as it ran in 2026.
 
+## What it looks like
+
+![Submission portal](docs/screenshots/portal.png)
+
+![Public leaderboard](docs/screenshots/leaderboard.png)
+
+![Dataset downloads](docs/screenshots/datasets.png)
+
+Captured from this codebase running locally on generated demo data, with ten fictional participants (`@example.com`) and synthetic datasets. No real participant data appears in these images.
+
 ## What is included, and what is not
 
 | Included | Excluded on purpose |

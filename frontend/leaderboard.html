@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARISE 2026 — Public Leaderboard</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+  html, body { height: auto !important; overflow-y: auto !important; }
+  body { background: #f4f7fb; min-height: 100vh; }
+  .card { border: none; border-radius: 14px; box-shadow: 0 6px 24px rgba(18,40,63,.08); }
+  .brand { color: #0f3d66; }
+  .rank-1 { background: #ffd700; color:#3a2d00; }
+  .rank-2 { background: #c0c0c0; color:#2b2b2b; }
+  .rank-3 { background: #cd7f32; color:#fff; }
+  .rank-finalist { background:#7c3aed; color:#fff; }
+  .row-finalist { background:#f6f2ff; }
+  .row-finalist:hover { background:#efe9fb !important; }
+  .fs-badge { background:#2DD4BF; color:#062a2a; font-weight:600; }
+  .you-row { background:#fff7e0 !important; font-weight:600; }
+  .page-wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  @media (max-width: 576px) { .page-wrap { padding: 20px 12px 56px; } }
+  .finalist-divider td { border: none !important; padding: 14px 0 10px; }
+  .divider-line { display: flex; align-items: center; gap: 12px; }
+  .divider-line::before, .divider-line::after { content: ''; flex: 1; height: 2px;
+    background: linear-gradient(90deg, transparent, #7c3aed, transparent); }
+  .divider-label { color:#7c3aed; font-weight:800; font-size:.78rem; letter-spacing:.1em;
+    text-transform:uppercase; white-space:nowrap; }
+  #rankResult .table { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="text-center mb-4">
+    <h1 class="brand fw-bold">ARISE 2026 — Leaderboard</h1>
+    <p class="text-muted">Individual · best score per participant · 30 submissions/day</p>
+    <p class="text-muted small" id="metricNote">Weighted 20/30/50 across levels</p>
+  </div>
+
+  <div id="statusBanner" class="alert mb-3" style="display:none;"></div>
+
+  <div class="btn-group w-100 mb-3" role="group" id="tabs">
+    <button class="btn btn-primary tab-btn" data-p="overall">Overall</button>
+    <button class="btn btn-outline-primary tab-btn" data-p="explorer">Explorer</button>
+    <button class="btn btn-outline-primary tab-btn" data-p="innovator">Innovator</button>
+    <button class="btn btn-outline-primary tab-btn" data-p="master">Master</button>
+  </div>
+
+  <div class="card p-3">
+    <table class="table table-hover mb-0 align-middle">
+      <thead><tr><th>#</th><th>Participant</th><th class="text-end" id="scoreHeader">Score</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="3" class="text-muted">Loading…</td></tr></tbody>
+    </table>
+  </div>
+  <p class="text-muted small mt-2 mb-0 text-center" id="note">
+    Problem tabs show raw accuracy (weighted contribution below).
+    Overall = weighted sum (out of 100).
+  </p>
+
+  <div class="card p-3 mt-3">
+    <h6>🔎 See your rank</h6>
+    <p class="text-muted small">Enter the email + token you registered with to see your position and the people around you.</p>
+    <form id="rankForm">
+      <div class="row g-2">
+        <div class="col-md-5">
+          <input class="form-control" name="email" type="email" placeholder="your email" required>
+        </div>
+        <div class="col-md-4">
+          <input class="form-control" name="token" type="password" placeholder="your token" required>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" name="problem">
+            <option value="overall">Overall</option>
+            <option value="explorer">Explorer</option>
+            <option value="innovator">Innovator</option>
+            <option value="master">Master</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <button class="btn btn-primary w-100" type="submit" id="rankBtn">See my rank</button>
+        </div>
+      </div>
+    </form>
+    <div id="rankResult" class="mt-3" style="display:none;"></div>
+  </div>
+
+  <div class="text-center mt-3">
+    <a href="/" class="btn btn-outline-secondary btn-sm">Back to Submission Portal</a>
+  </div>
+</div>
+
+<script>
+let current = 'overall';
+let revealed = false;
+
+const DIVIDER = `
+  <tr class="finalist-divider"><td colspan="3">
+    <div class="divider-line"><span class="divider-label">🏆 Finalist — Top 10</span></div>
+  </td></tr>`;
+
+function rowHtml(r, isOverall) {
+  const rankCls = r.rank === 1 ? 'rank-1' : r.rank === 2 ? 'rank-2' : r.rank === 3 ? 'rank-3'
+    : r.finalist ? 'rank-finalist' : 'bg-secondary';
+  const rowCls = r.finalist && r.rank > 3 ? 'row-finalist' : '';
+  const fsBadge = r.first_solver ? ' <span class="badge fs-badge">⚡ First Solver</span>' : '';
+  const breakdown = isOverall && r.problems
+    ? `<div class="text-muted small">
+         E ${(r.problems.explorer ?? '-')} · I ${(r.problems.innovator ?? '-')} · M ${(r.problems.master ?? '-')}
+       </div>`
+    : (!isOverall && r.raw != null
+        ? `<div class="text-muted small">weighted: ${Number(r.score).toFixed(2)} / ${r.max}</div>`
+        : '');
+  const score = isOverall
+    ? `${Number(r.score).toFixed(2)} <span class="text-muted small fw-normal">/ 100</span>`
+    : Number(r.raw).toFixed(4);
+  return `
+  <tr class="${rowCls}">
+    <td><span class="badge ${rankCls}">${r.rank}</span></td>
+    <td class="fw-semibold">${r.name}${fsBadge}${breakdown}</td>
+    <td class="text-end fw-bold">${score}</td>
+  </tr>`;
+}
+
+function setBanner() {
+  const el = document.getElementById('statusBanner');
+  if (revealed) {
+    el.className = 'alert alert-success mb-3';
+    el.innerHTML = '🏁 <strong>Submissions closed — final results.</strong> The full leaderboard is now public.';
+    el.style.display = 'block';
+  } else {
+    el.className = 'alert alert-warning mb-3';
+    el.innerHTML = '🔒 <strong>Top 10 only for now.</strong> The full leaderboard is revealed after submissions close (<strong>Fri 28 Aug 2026, 23:59 WIB</strong>). Want to see your own rank? Use the <strong>"See your rank"</strong> box below with your email + token.';
+    el.style.display = 'block';
+  }
+}
+
+async function load(p) {
+  current = p;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('btn-primary', b.dataset.p === p);
+    b.classList.toggle('btn-outline-primary', b.dataset.p !== p);
+  });
+  const isOverall = p === 'overall';
+  document.getElementById('scoreHeader').textContent = isOverall ? 'Weighted Score' : 'Score';
+  const metricHint = {explorer: 'accuracy', innovator: 'accuracy', master: 'F1 (positive class)'}[p];
+  document.getElementById('metricNote').textContent = isOverall
+    ? 'Weighted 20/30/50 across levels'
+    : `Metric: ${metricHint}`;
+  const q = isOverall ? '' : '?problem=' + p;
+  try {
+    const res = await fetch('/leaderboard' + q);
+    const data = await res.json();
+    revealed = data.revealed;
+    setBanner();
+    const tb = document.getElementById('rows');
+    const rows = data.rows || [];
+    if (!rows.length) {
+      tb.innerHTML = '<tr><td colspan="3" class="text-muted">No submissions yet.</td></tr>';
+      return;
+    }
+    const finalists = rows.filter(r => r.finalist);
+    const rest = rows.filter(r => !r.finalist);
+    const parts = [];
+    if (finalists.length) {
+      parts.push(finalists.map(r => rowHtml(r, isOverall)).join(''));
+      parts.push(DIVIDER);
+    }
+    if (rest.length) parts.push(rest.map(r => rowHtml(r, isOverall)).join(''));
+    tb.innerHTML = parts.join('');
+  } catch (e) {
+    document.getElementById('rows').innerHTML =
+      '<tr><td colspan="3" class="text-danger">Could not load leaderboard.</td></tr>';
+  }
+}
+
+document.querySelectorAll('.tab-btn').forEach(b =>
+  b.addEventListener('click', () => load(b.dataset.p)));
+load('overall');
+setInterval(() => load(current), 30000);
+
+// ── See my rank ──────────────────────────────────────────────
+const rankForm = document.getElementById('rankForm');
+const rankResult = document.getElementById('rankResult');
+const rankBtn = document.getElementById('rankBtn');
+
+rankForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  rankBtn.disabled = true; rankBtn.textContent = 'Checking…';
+  rankResult.style.display = 'none';
+  const fd = new FormData(rankForm);
+  try {
+    const res = await fetch('/api/my-rank', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) {
+      rankResult.innerHTML = `<div class="alert alert-danger mb-0">${data.detail || 'Could not find your rank'}</div>`;
+    } else {
+      const rows = data.neighborhood || [];
+      let cutHtml = '';
+      if (data.cut) {
+        cutHtml = data.cut.in_top10
+          ? `<div class="alert alert-success mb-2 py-2"><strong>🏆 You are in the Top 10 (#${data.cut.rank})!</strong>${data.cut.points_ahead_of_11th != null ? ` You are <b>${data.cut.points_ahead_of_11th} pts</b> ahead of #11.` : ''}</div>`
+          : `<div class="alert alert-warning mb-2 py-2">You are <b>#${data.cut.rank}</b> — <b>${data.cut.points_behind_top10} pts</b> behind the Top-10 cut. Beat the person above you!</div>`;
+      }
+      const table = rows.length
+        ? `<table class="table table-sm align-middle">
+             <thead><tr><th>#</th><th>Participant</th><th class="text-end">Score</th></tr></thead>
+             <tbody>${rows.map(r => `
+               <tr class="${r.you ? 'you-row' : ''}">
+                 <td><span class="badge ${r.you ? 'bg-warning text-dark' : (r.rank <= data.finalist_cut ? 'rank-finalist' : 'bg-secondary')}">${r.rank}</span></td>
+                 <td>${r.name}${r.you ? ' <span class="badge bg-warning text-dark">you</span>' : ''}</td>
+                 <td class="text-end">${r.score}</td>
+               </tr>`).join('')}
+             </tbody>
+           </table>`
+        : '<p class="text-muted mb-0">You are not on this leaderboard yet — submit a prediction first!</p>';
+      rankResult.innerHTML = `<div class="border rounded p-2">${cutHtml}${table}</div>`;
+    }
+  } catch (err) {
+    rankResult.innerHTML = `<div class="alert alert-danger mb-0">Network error: ${err.message}</div>`;
+  }
+  rankResult.style.display = 'block';
+  rankBtn.disabled = false; rankBtn.textContent = 'See my rank';
+});
+</script>
+</body>
+</html>

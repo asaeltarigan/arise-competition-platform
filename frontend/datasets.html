@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARISE 2026 — Datasets</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+  html, body { height: auto !important; overflow-y: auto !important; }
+  body { background: #f4f7fb; min-height: 100vh; }
+  .card { border: none; border-radius: 14px; box-shadow: 0 6px 24px rgba(18,40,63,.08); }
+  .page-wrap { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+  .brand { color: #0f3d66; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="text-center mb-4">
+    <h1 class="brand fw-bold">ARISE 2026 — Datasets</h1>
+    <p class="text-muted">Download the competition data. All submissions use the same test set.</p>
+  </div>
+
+  <div class="card p-4 mb-3">
+    <h5>🟢 Explorer — Basic ML (20%)</h5>
+    <p class="text-muted small mb-2"><strong>Titanic</strong> — classic tabular survival classification
+      (712 train / 179 test rows, 10 features incl. <code>name</code>/<code>ticket</code>/<code>cabin</code>).
+      Missing values + free-text columns are intentional — preprocessing and feature engineering are part of the task.
+      <span class="text-danger">The answer key is never included in downloads.</span></p>
+    <a class="btn btn-success" href="/datasets/explorer/download">Download Explorer dataset (ZIP)</a>
+    <a class="btn btn-outline-primary ms-2" href="/notebooks/ARISE_Explorer_Titanic_Starter.ipynb">📓 Starter notebook</a>
+  </div>
+
+  <div class="card p-4 mb-3">
+    <h5>🔵 Innovator — Advanced ML (30%)</h5>
+    <p class="text-muted small mb-2"><strong>Dry Bean</strong> — 7-class seed classification from image-derived
+      measurements (10,888 train / 2,723 test rows, 16 numeric features). Made for ensembles: Random Forest,
+      XGBoost / LightGBM.</p>
+    <a class="btn btn-success" href="/datasets/innovator/download">Download Innovator dataset (ZIP)</a>
+  </div>
+
+  <div class="card p-4 mb-3">
+    <h5>🟣 Master — Advanced ML (50%)</h5>
+    <p class="text-muted small mb-2"><strong>APS Failure at Scania Trucks</strong> — rare-event classification
+      (48,000 train / 12,000 test rows, 170 anonymized features, ~1.7% positive).
+      Imbalanced + heavy missing data — scored on <strong>F1 of the positive class</strong>,
+      not accuracy. XGBoost/LightGBM, class imbalance handling, and threshold tuning are the game.</p>
+ <a class="btn btn-success" href="/datasets/master/download">Download Master dataset (ZIP)</a>
+ </div>
+
+ <div class="card p-4 mb-3">
+ <h5>📓 Starter notebooks</h5>
+ <p class="text-muted small mb-2">Guided competition skeletons for each level — the TODOs are the point.
+ Fill them, compare models, keep an experiment log, then submit.</p>
+ <a class="btn btn-outline-primary" href="/notebooks/ARISE_Explorer_Titanic_Starter.ipynb">🟢 Explorer starter</a>
+ <a class="btn btn-outline-primary ms-2" href="/notebooks/ARISE_Innovator_DryBean_Starter.ipynb">🔵 Innovator starter</a>
+ </div>
+
+  <div class="card p-3">
+    <h6>How submissions work</h6>
+    <ol class="small text-muted mb-0">
+      <li>Download the dataset above — use <strong>exactly</strong> the <code>test.csv</code> provided.</li>
+      <li>Train on <code>train.csv</code> (or <code>train/</code> + <code>labels.csv</code> for Master).</li>
+      <li>Predict the label for every row in <code>test.csv</code>.</li>
+      <li>Upload <code>submission.csv</code> (columns: <code>id,prediction</code>) on the submission portal.</li>
+    </ol>
+  </div>
+
+  <div class="text-center mt-3">
+    <a href="/" class="btn btn-outline-secondary btn-sm">Back to Submission Portal</a>
+  </div>
+</div>
+</body>
+</html>
